@@ -13,7 +13,7 @@ import FriendsFollow from "./pages/FriendsFollow";
 import FriendProfile from "./pages/FriendProfile"; // new import
 import CreateGroup from "./pages/CreateGroup";
 import GroupDetails from "./pages/GroupDetails";
-
+import ChatPage from "./pages/ChatPage";
 import WishlistPage from "./pages/WishlistPage";
 
 function App() {
@@ -25,6 +25,7 @@ function App() {
         <Link to="/feed">Feed</Link>
         <Link to="/groups">Groups</Link>
         <Link to="/leaderboard">Leaderboard</Link>
+        <Link to="/chat">Chat</Link>
       </nav>
 
       <Routes>
@@ -43,6 +44,7 @@ function App() {
         <Route path="/friend-profile" element={<FriendProfile />} />
         <Route path="/create-group" element={<CreateGroup />} />
         <Route path="/group-details" element={<GroupDetails />} />
+        <Route path="/chat" element={<ChatPage />} />
       </Routes>
     </>
   );
