@@ -2,46 +2,76 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import PostCard from "../components/PostCard";
+import RecommendedProfileCard from "../components/RecommendedProfileCard";
+import API from "../utils/api";
 
 export default function Feed() {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    document.title = "TwinVerse Feed";
-  }, []);
-
-  // Updated dummy posts data with Walmart signature blue
-  const [posts, setPosts] = useState([
+  const fallbackPosts = [
     {
       id: 1,
-      author: "Twin A",
-      content: "Just bought a cool gadget at Walmart!",
-      timestamp: "2 hours ago",
-      reactions: { like: 5, heart: 2, laugh: 1 },
-      photo:
-        "https://dummyimage.com/600x400/000/fff&text=Walmart+Gadget",
-      comments: ["Awesome!", "Congrats!"],
+      caption: "👋 Welcome to TwinVerse! Start exploring and connecting with your twins now.",
+      created_at: new Date().toISOString(),
+      user: { username: "Admin" },
+      image: "https://dummyimage.com/600x400/0071ce/ffffff&text=Welcome+to+TwinVerse",
+      reactions: [
+        { type: "like", user: null },
+        { type: "love", user: null },
+        { type: "laugh", user: null },
+      ],
+      comments: [
+        { user: { username: "User1" }, comment: "Excited to be here!" },
+        { user: { username: "User2" }, comment: "Looks amazing 🔥" },
+      ],
     },
-    {
-      id: 2,
-      author: "Twin B",
-      content: "Check out my new style. #fashion",
-      timestamp: "1 day ago",
-      reactions: { like: 3, heart: 4, laugh: 0 },
-      photo:
-        "https://dummyimage.com/600x400/000/fff&text=Fashion+Style",
-      comments: ["Love it!", "So stylish!"],
-    },
-    {
-      id: 3,
-      author: "Twin C",
-      content: "Anyone interested in a group deal? Let's save together.",
-      timestamp: "3 days ago",
-      reactions: { like: 2, heart: 1, laugh: 5 },
-      // No photo for this post, just text
-      comments: [],
-    },
-  ]);
+  ];
+
+  const [posts, setPosts] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
+
+  useEffect(() => {
+    document.title = "TwinVerse Feed";
+    fetchRecommendations();
+    fetchFeedPosts();
+  }, []);
+
+  const fetchFeedPosts = async () => {
+    try {
+      const res = await API.get("/feed/posts/");
+      if (Array.isArray(res.data)) {
+        setPosts(res.data); // non-paginated
+      } else if (Array.isArray(res.data.results)) {
+        setPosts(res.data.results); // paginated
+      } else {
+        console.warn("Unexpected feed format:", res.data);
+        setPosts(fallbackPosts); // fallback on unexpected format
+      }
+    } catch (err) {
+      console.error("Failed to load posts:", err);
+      setPosts(fallbackPosts); // use fallback on error
+    }
+  };
+
+
+  const fetchRecommendations = async () => {
+    try {
+      const res = await API.get("/users/discover/");
+      setRecommendations(res.data);
+    } catch (err) {
+      console.error("Failed to load recommendations:", err);
+    }
+  };
+
+  const handleFollow = async (username) => {
+    try {
+      await API.post("/users/follow/", { target_username: username });
+      fetchRecommendations(); // refresh the sidebar after toggle
+      fetchFeedPosts();
+    } catch (err) {
+      console.error("Follow/unfollow failed:", err);
+    }
+  };
 
   return (
     <motion.div
@@ -77,11 +107,43 @@ export default function Feed() {
         </motion.button>
       </div>
 
-      {/* Render posts */}
-      <div>
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} />
-        ))}
+      {/* Main Feed + Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Feed (2/3) */}
+        <div className="lg:col-span-2">
+          {Array.isArray(posts) ? (
+            posts.map((post) => <PostCard key={post.id} post={post} />)
+          ) : (
+            <p className="text-center text-gray-600">No posts to show.</p>
+          )}
+        </div>
+
+        {/* Sidebar (1/3) */}
+        <div className="bg-white bg-opacity-80 rounded-xl p-4 shadow-md h-fit">
+          <h2 className="text-xl font-semibold mb-4 text-blue-900">🔍 Who to Follow</h2>
+          {recommendations.length === 0 ? (
+            <p className="text-sm text-gray-500">You're all caught up!</p>
+          ) : (
+            recommendations.map((profile) => (
+              <RecommendedProfileCard
+                key={profile.id}
+                profile={profile}
+                onFollow={handleFollow}
+              />
+            ))
+          )}
+        </div>
+
+        <motion.button
+          onClick={() => navigate("/create-post")}
+          className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-3xl flex items-center justify-center shadow-lg z-50"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+          aria-label="Create Post"
+        >
+          +
+        </motion.button>
       </div>
     </motion.div>
   );

@@ -1,14 +1,26 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import API from "../utils/api"; // Make sure this is imported
 
-export default function FriendCard({ friend }) {
-  const [isFollowing, setIsFollowing] = useState(false);
+export default function FriendCard({ friend, onUnfollow }) {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  const toggleFollow = (e) => {
-    e.stopPropagation();
-    setIsFollowing((prev) => !prev);
+  const handleUnfollow = async (e) => {
+    e.stopPropagation(); // Prevent navigating to profile
+    setLoading(true);
+    try {
+      const res = await API.post("/users/follow/", {
+        target_username: friend.username,
+      });
+      console.log(res.data.detail); // Followed or Unfollowed
+      onUnfollow(friend.username);  // Trigger update in parent component
+    } catch (err) {
+      console.error("Unfollow failed:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const openProfile = () => {
@@ -24,9 +36,9 @@ export default function FriendCard({ friend }) {
       onClick={openProfile}
     >
       <div className="flex items-center space-x-4">
-        <img 
-          src={friend.avatar} 
-          alt="Friend avatar" 
+        <img
+          src={friend.avatar}
+          alt="Friend avatar"
           className="w-12 h-12 rounded-full border"
           onError={(e) => {
             e.target.onerror = null;
@@ -35,18 +47,15 @@ export default function FriendCard({ friend }) {
         />
         <div>
           <p className="font-semibold text-gray-800">{friend.name}</p>
-          <p className="text-xs text-gray-500">{friend.subtitle}</p>
+          <p className="text-xs text-gray-500">{friend.subtitle || "Followed Twin"}</p>
         </div>
       </div>
-      <button 
-        onClick={toggleFollow}
-        className={`px-4 py-2 rounded-full text-sm font-semibold border transition hover:opacity-80 ${
-          isFollowing
-            ? "bg-blue-500 text-white border-blue-500"
-            : "bg-white text-blue-500 border-blue-500"
-        }`}
+      <button
+        onClick={handleUnfollow}
+        disabled={loading}
+        className="px-4 py-2 rounded-full text-sm font-semibold border border-blue-500 text-blue-500 bg-white hover:bg-blue-50 transition"
       >
-        {isFollowing ? "Following" : "Follow"}
+        {loading ? "..." : "Unfollow"}
       </button>
     </motion.div>
   );

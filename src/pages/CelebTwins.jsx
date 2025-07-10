@@ -10,12 +10,12 @@ const celebTwins = [
     picks: [
       {
         name: "Luxury Sneakers",
-        image: "https://images.unsplash.com/photo-1606813902784-d1dabf4f3e38",
+        image: "https://images.unsplash.com/photo-1606813902784-d1dabf4f3e38?auto=format&fit=crop&w=800&q=80",
         reason: "Bold and fashion-forward – just like Ranveer."
       },
       {
         name: "Designer Jacket",
-        image: "https://images.unsplash.com/photo-1618354691320-539c553adfd5",
+        image: "https://images.unsplash.com/photo-1618354691320-539c553adfd5?auto=format&fit=crop&w=800&q=80",
         reason: "A statement piece for the spotlight moments."
       }
     ]
@@ -27,12 +27,12 @@ const celebTwins = [
     picks: [
       {
         name: "Pastel Hoodie",
-        image: "https://images.unsplash.com/photo-1618221620466-80b10bcfbd2d",
+        image: "https://images.unsplash.com/photo-1618221620466-80b10bcfbd2d?auto=format&fit=crop&w=800&q=80",
         reason: "Soft, trendy, and cozy – Alia vibes."
       },
       {
         name: "Canvas Tote",
-        image: "https://images.unsplash.com/photo-1618354691055-57f6d7f59d6b",
+        image: "https://images.unsplash.com/photo-1618354691055-57f6d7f59d6b?auto=format&fit=crop&w=800&q=80",
         reason: "Perfect for weekend errands and brunches."
       }
     ]
@@ -44,12 +44,12 @@ const celebTwins = [
     picks: [
       {
         name: "Performance T-Shirt",
-        image: "https://images.unsplash.com/photo-1598970434795-0c54fe7c0642",
+        image: "https://images.unsplash.com/photo-1598970434795-0c54fe7c0642?auto=format&fit=crop&w=800&q=80",
         reason: "Engineered for focus and fitness."
       },
       {
         name: "Training Shoes",
-        image: "https://images.unsplash.com/photo-1519741497674-611481863552",
+        image: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
         reason: "For those who chase greatness daily."
       }
     ]

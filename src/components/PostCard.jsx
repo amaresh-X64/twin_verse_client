@@ -1,30 +1,63 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import API from "../utils/api";
 
 export default function PostCard({ post }) {
-  // Reaction counts and toggle state for user reactions.
-  const [reactionCounts, setReactionCounts] = useState(
-    post.reactions || { like: 0, heart: 0, laugh: 0 }
-  );
-  const [userReactions, setUserReactions] = useState({
-    like: false,
-    heart: false,
-    laugh: false,
-  });
-  const [comments, setComments] = useState(post.comments || []);
+  const [reactionCounts, setReactionCounts] = useState({ like: 0, love: 0, laugh: 0 });
+  const [userReactionType, setUserReactionType] = useState(null);
+  const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
 
-  const toggleReaction = (type) => {
-    const alreadyReacted = userReactions[type];
-    const adjustment = alreadyReacted ? -1 : 1;
-    setReactionCounts((prev) => ({ ...prev, [type]: prev[type] + adjustment }));
-    setUserReactions((prev) => ({ ...prev, [type]: !alreadyReacted }));
+  // Format created time (simple fallback)
+  const timestamp = new Date(post.created_at).toLocaleString();
+
+  useEffect(() => {
+  const counts = { like: 0, love: 0, laugh: 0 };
+  const currentUsername = localStorage.getItem("username");
+
+  post.reactions?.forEach((r) => {
+    counts[r.type] = (counts[r.type] || 0) + 1;
+    if (r.user?.username === currentUsername) {
+      setUserReactionType(r.type);
+    }
+    });
+
+    setReactionCounts(counts);
+    setComments(post.comments || []);
+  }, [post]);
+
+  const handleReaction = async (type) => {
+    if (userReactionType === type) return; // prevent duplicate
+
+    try {
+      await API.post("/feed/reactions/", {
+        post: post.id,
+        type: type,
+      });
+
+      setReactionCounts((prev) => ({
+        ...prev,
+        [type]: prev[type] + 1,
+        [userReactionType]: userReactionType ? prev[userReactionType] - 1 : prev[userReactionType],
+      }));
+      setUserReactionType(type);
+    } catch (err) {
+      console.error("Failed to react:", err);
+    }
   };
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (commentInput.trim() === "") return;
-    setComments([...comments, commentInput]);
-    setCommentInput("");
+    try {
+      const res = await API.post("/feed/comments/", {
+        post: post.id,
+        comment: commentInput,
+      });
+      setComments([...comments, res.data]);
+      setCommentInput("");
+    } catch (err) {
+      console.error("Failed to comment:", err);
+    }
   };
 
   return (
@@ -35,61 +68,48 @@ export default function PostCard({ post }) {
       transition={{ duration: 0.5 }}
     >
       <div className="flex items-center justify-between mb-2">
-        <div className="font-bold text-gray-800">{post.author}</div>
-        <div className="text-xs text-gray-500">{post.timestamp}</div>
+        <div className="font-bold text-gray-800">
+          {post.user?.username || post.author || "Unknown"}
+        </div>
+      <div className="text-xs text-gray-500">{timestamp}</div>
       </div>
-      <p className="text-gray-700 mb-4">{post.content}</p>
-      {post.photo && (
+      <p className="text-gray-700 mb-4">{post.caption}</p>
+      {post.image && (
         <img
-          src={post.photo}
+          src={post.image}
           alt="Post visual"
           className="w-full h-auto rounded-lg mb-4"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src =
-              "https://dummyimage.com/600x400/ccc/000&text=Image+Not+Found";
-          }}
         />
       )}
+
+      {/* Reactions */}
       <div className="flex space-x-4 mb-2">
-        <button
-          onClick={() => toggleReaction("like")}
-          className={`flex items-center text-sm ${
-            userReactions.like
-              ? "text-blue-500 font-bold"
-              : "text-gray-600 hover:text-blue-500"
-          }`}
-        >
-          👍 {reactionCounts.like}
-        </button>
-        <button
-          onClick={() => toggleReaction("heart")}
-          className={`flex items-center text-sm ${
-            userReactions.heart
-              ? "text-red-500 font-bold"
-              : "text-gray-600 hover:text-red-500"
-          }`}
-        >
-          ❤️ {reactionCounts.heart}
-        </button>
-        <button
-          onClick={() => toggleReaction("laugh")}
-          className={`flex items-center text-sm ${
-            userReactions.laugh
-              ? "text-yellow-500 font-bold"
-              : "text-gray-600 hover:text-yellow-500"
-          }`}
-        >
-          😂 {reactionCounts.laugh}
-        </button>
+        {["like", "love", "laugh"].map((type) => (
+          <button
+            key={type}
+            onClick={() => handleReaction(type)}
+            className={`text-sm ${
+              userReactionType === type
+                ? "font-bold text-blue-600"
+                : "text-gray-600 hover:text-blue-500"
+            }`}
+          >
+            {type === "like" && "👍"}
+            {type === "love" && "❤️"}
+            {type === "laugh" && "😂"} {reactionCounts[type] || 0}
+          </button>
+        ))}
       </div>
+
+      {/* Comments */}
       <div className="mb-2">
-        {comments.map((comment, index) => (
-          <p key={index} className="text-xs text-gray-500 italic">
-            • {comment}
+        {comments.map((c, i) => (
+          <p key={i} className="text-xs text-gray-600 italic">
+            • <strong>{c.user?.username || "User"}:</strong> {c.comment}
           </p>
         ))}
       </div>
+
       <div className="flex">
         <input
           type="text"

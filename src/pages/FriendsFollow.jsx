@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import FriendCard from "../components/FriendCard";
+import API from "../utils/api";
 
 export default function FriendsFollow() {
   useEffect(() => {
     document.title = "Friends & Follow";
+    
+    const loadFriends = async () => {
+      const data = await fetchFriends();
+      if (data) setFriends(data);
+      };
+    loadFriends();
   }, []);
+
+  const handleUnfollow = (username) => {
+  setFriends((prev) => prev.filter((f) => f.username !== username));
+  };
 
   const [friends, setFriends] = useState([
     {
@@ -40,9 +51,22 @@ export default function FriendsFollow() {
       </h1>
       <div className="max-w-xl mx-auto">
         {friends.map((friend) => (
-          <FriendCard key={friend.id} friend={friend} />
+          <FriendCard key={friend.id} friend={friend} onUnfollow={handleUnfollow} />
         ))}
       </div>
     </motion.div>
   );
 }
+
+const fetchFriends=async()=>{
+  try{
+    const res= await API.get("/users/follow/");
+    
+    console.log("Friends fetched successfully:", res);
+    return res.data;
+  }
+  catch(err){
+    console.error("Failed to fetch friends:", err);
+  }
+}
+

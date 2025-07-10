@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import API from "../utils/api";
 
 export default function Onboarding() {
 const navigate = useNavigate();
@@ -18,13 +19,10 @@ const navigate = useNavigate();
     "https://api.dicebear.com/7.x/bottts/svg?seed=12",
   ];
 
-
-
   const [twin, setTwin] = useState(null);
-  // Steps: 0: Name & Tagline, 1: Style, 2: Interests, 3: Shopping & Reaction, 4: Fav Category, 5: Base Avatar
   const [currentStep, setCurrentStep] = useState(0);
-  // Using slower transitions (2000ms)
   const [animateStep, setAnimateStep] = useState("opacity-0 translate-x-10");
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
   useEffect(() => {
     setTimeout(() => {
@@ -38,10 +36,15 @@ const navigate = useNavigate();
     style: "Minimalist",
     interests: [],
     shoppingTime: [],
-    reaction: "analytical", // represents psychological reaction
+    reaction: "analytical",
     favCategory: "Electronics",
     avatar: "",
   });
+
+  // Fetch username on component mount
+  useEffect(() => {
+    fetchUserName();
+  }, []);
 
   const goToStep = (newStep) => {
     setAnimateStep("opacity-0 translate-x-10");
@@ -63,6 +66,20 @@ const navigate = useNavigate();
     }
   };
 
+  const fetchUserName = async () => {
+    setIsLoadingUser(true);
+    try {
+      const res = await API.get("/users/me/");
+      if (res.data && res.data.username) {
+        setForm((prevForm) => ({ ...prevForm, name: res.data.username }));
+      }
+    } catch (err) {
+      console.error("Error fetching user name:", err);
+    } finally {
+      setIsLoadingUser(false);
+    }
+  };
+
   const handleNext = (e) => {
     e.preventDefault();
     goToStep(currentStep + 1);
@@ -73,15 +90,22 @@ const navigate = useNavigate();
     goToStep(currentStep - 1);
   };
 
-  const handleSubmit = (e) => {
-  e.preventDefault();
-  const finalTwin = { ...form, avatar: form.avatar };
-  setTwin(finalTwin);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const finalTwin = { ...form, avatar: form.avatar };
+    setTwin(finalTwin);
 
-  // 🧠 Save to localStorage for later usage in recommendations
-  localStorage.setItem("twinProfile", JSON.stringify(finalTwin));
-};
+    // Save to localStorage
+    localStorage.setItem("twinProfile", JSON.stringify(finalTwin));
 
+    // Upload to backend using finalTwin directly
+    try {
+      const res = await API.post("/twin/profile/", finalTwin);
+      console.log("Twin uploaded:", res.data);
+    } catch (err) {
+      console.error("Error uploading twin:", err);
+    }
+  };
 
   // When editing the avatar, go back to the avatar selection step (step 5)
   const handleEditAvatar = () => {
@@ -94,20 +118,21 @@ const navigate = useNavigate();
       case 0:
         return (
           <div className="space-y-6">
-            <h2 className="text-3xl font-extrabold text-center">What's your name?</h2>
-            <input
-              name="name"
-              placeholder="Enter your name..."
-              className="border-2 border-gray-300 rounded p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              onChange={handleChange}
-              required
-            />
+            <div className="bg-gray-50 p-4 rounded-lg border">
+              <label className="block text-base font-medium text-gray-700 mb-1">
+                Username:
+              </label>
+              <div className="text-lg font-semibold text-blue-600">
+                {isLoadingUser ? "Loading..." : form.name || "Not found"}
+              </div>
+            </div>
             <div>
               <label className="block text-base font-medium mb-1">
                 A catchy tagline for your twin:
               </label>
               <input
                 name="catchphrase"
+                value={form.catchphrase}
                 placeholder="E.g. 'Always ahead of the trends!'"
                 className="border-2 border-gray-300 rounded p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                 onChange={handleChange}
@@ -171,6 +196,7 @@ const navigate = useNavigate();
                     type="checkbox"
                     name="shoppingTime"
                     value={time}
+                    checked={form.shoppingTime.includes(time)}
                     onChange={handleChange}
                     className="cursor-pointer"
                   />
@@ -184,6 +210,7 @@ const navigate = useNavigate();
               </label>
               <select
                 name="reaction"
+                value={form.reaction}
                 className="border-2 border-gray-300 p-3 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                 onChange={handleChange}
               >
@@ -196,18 +223,19 @@ const navigate = useNavigate();
       case 4:
         return (
           <div className="space-y-6">
-            <h2 className="text-3xl font-extrabold text-center">What’s your favorite product category?</h2>
+            <h2 className="text-3xl font-extrabold text-center">What's your favorite product category?</h2>
             <select
               name="favCategory"
+              value={form.favCategory}
               className="border-2 border-gray-300 p-3 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               onChange={handleChange}
             >
-              <option>Electronics</option>
-              <option>Apparel</option>
-              <option>Home & Garden</option>
-              <option>Books</option>
-              <option>Beauty</option>
-              <option>Sports</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Apparel">Apparel</option>
+              <option value="Home & Garden">Home & Garden</option>
+              <option value="Books">Books</option>
+              <option value="Beauty">Beauty</option>
+              <option value="Sports">Sports</option>
             </select>
           </div>
         );
@@ -246,6 +274,7 @@ const navigate = useNavigate();
           <div className="flex justify-between">
             {currentStep > 0 && (
               <button
+                type="button"
                 onClick={handleBack}
                 className="bg-gray-300 text-gray-800 py-3 px-6 rounded hover:bg-gray-400 transition"
               >
@@ -262,87 +291,84 @@ const navigate = useNavigate();
         </form>
       ) : (
         <div className="bg-gradient-to-br from-white to-blue-100 p-6 rounded-3xl shadow-2xl max-w-md w-full text-gray-900 relative overflow-hidden">
-  {/* Avatar Section */}
-  <div className="flex flex-col items-center gap-4">
-    <div className="relative">
-      <img
-        src={twin.avatar}
-        alt="Twin Avatar"
-        className="w-36 h-36 rounded-full border-[6px] border-blue-600 shadow-lg"
-      />
-      <div className="absolute bottom-0 right-0 bg-blue-600 text-white px-3 py-1 text-xs rounded-full">
-        Your Twin
-      </div>
-    </div>
+          {/* Avatar Section */}
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative">
+              <img
+                src={twin.avatar}
+                alt="Twin Avatar"
+                className="w-36 h-36 rounded-full border-[6px] border-blue-600 shadow-lg"
+              />
+              <div className="absolute bottom-0 right-0 bg-blue-600 text-white px-3 py-1 text-xs rounded-full">
+                Your Twin
+              </div>
+            </div>
 
-    {/* Twin Name & Catchphrase */}
-    <h2 className="text-2xl font-extrabold tracking-tight">{twin.name}</h2>
-    <p className="text-center italic text-blue-800 text-sm">"{twin.catchphrase}"</p>
-  </div>
+            {/* Twin Name & Catchphrase */}
+            <h2 className="text-2xl font-extrabold tracking-tight">{twin.name}</h2>
+            <p className="text-center italic text-blue-800 text-sm">"{twin.catchphrase}"</p>
+          </div>
 
-  {/* Twin Stats */}
-  <div className="mt-6 space-y-4">
-    <div className="flex justify-center gap-2 flex-wrap">
-      <span className="bg-blue-100 text-blue-900 px-3 py-1 rounded-full text-sm font-medium">
-        Style: {twin.style}
-      </span>
-      <span className="bg-blue-100 text-blue-900 px-3 py-1 rounded-full text-sm font-medium">
-        Category: {twin.favCategory}
-      </span>
-      
-    </div>
+          {/* Twin Stats */}
+          <div className="mt-6 space-y-4">
+            <div className="flex justify-center gap-2 flex-wrap">
+              <span className="bg-blue-100 text-blue-900 px-3 py-1 rounded-full text-sm font-medium">
+                Style: {twin.style}
+              </span>
+              <span className="bg-blue-100 text-blue-900 px-3 py-1 rounded-full text-sm font-medium">
+                Category: {twin.favCategory}
+              </span>
+            </div>
 
-    {/* Interests Section */}
-    <div>
-      <h3 className="text-sm font-semibold mb-1 text-gray-700">Interests:</h3>
-      <div className="flex flex-wrap gap-2">
-        {twin.interests.map((interest) => (
-          <span
-            key={interest}
-            className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-xs"
-          >
-            {interest}
-          </span>
-        ))}
-      </div>
-    </div>
+            {/* Interests Section */}
+            <div>
+              <h3 className="text-sm font-semibold mb-1 text-gray-700">Interests:</h3>
+              <div className="flex flex-wrap gap-2">
+                {twin.interests.map((interest) => (
+                  <span
+                    key={interest}
+                    className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-xs"
+                  >
+                    {interest}
+                  </span>
+                ))}
+              </div>
+            </div>
 
-    {/* Shopping Time */}
-    {twin.shoppingTime.length > 0 && (
-      <div>
-        <h3 className="text-sm font-semibold mb-1 text-gray-700">Shopping Time:</h3>
-        <div className="flex flex-wrap gap-2">
-          {twin.shoppingTime.map((time) => (
-            <span
-              key={time}
-              className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs"
+            {/* Shopping Time */}
+            {twin.shoppingTime.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold mb-1 text-gray-700">Shopping Time:</h3>
+                <div className="flex flex-wrap gap-2">
+                  {twin.shoppingTime.map((time) => (
+                    <span
+                      key={time}
+                      className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs"
+                    >
+                      {time}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Change Avatar Button */}
+          <div className="mt-6 flex justify-center gap-4">
+            <button
+              onClick={handleEditAvatar}
+              className="bg-blue-600 text-white py-2 px-4 text-sm rounded-full hover:bg-blue-700 transition shadow-md"
             >
-              {time}
-            </span>
-          ))}
+              Change Avatar
+            </button>
+            <button
+              onClick={() => navigate("/recommendations")}
+              className="bg-blue-600 text-white py-2 px-4 text-sm rounded-full hover:bg-green-700 transition shadow-md"
+            >
+              Show My Recommendations
+            </button>
+          </div>
         </div>
-      </div>
-    )}
-  </div>
-
-  {/* Change Avatar Button */}
- <div className="mt-6 flex justify-center gap-4">
-  <button
-    onClick={handleEditAvatar}
-    className="bg-blue-600 text-white py-2 px-4 text-sm rounded-full hover:bg-blue-700 transition shadow-md"
-  >
-    Change Avatar
-  </button>
-  <button
-    onClick={() => navigate("/recommendations")}
-    className="bg-blue-600 text-white py-2 px-4 text-sm rounded-full hover:bg-green-700 transition shadow-md"
-  >
-    Show My Recommendations
-  </button>
-</div>
-
-</div>
-
       )}
     </div>
   );

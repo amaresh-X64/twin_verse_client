@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
 import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
 import Feed from "./pages/Feed";
@@ -15,13 +15,14 @@ import CreateGroup from "./pages/CreateGroup";
 import GroupDetails from "./pages/GroupDetails";
 import ChatPage from "./pages/ChatPage";
 import WishlistPage from "./pages/WishlistPage";
+import CreatePost from "./components/CreatePost";
 
 function App() {
   return (
     <>
       <nav className="bg-walmartBlue text-white px-6 py-4 flex gap-6">
-        <Link to="/onboarding">Onboarding</Link>
         <Link to="/profile">Profile</Link>
+        <Link to="/friends-follow">Following</Link>
         <Link to="/feed">Feed</Link>
         <Link to="/groups">Groups</Link>
         <Link to="/leaderboard">Leaderboard</Link>
@@ -29,6 +30,7 @@ function App() {
       </nav>
 
       <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/feed" element={<Feed />} />
@@ -44,6 +46,7 @@ function App() {
         <Route path="/friend-profile" element={<FriendProfile />} />
         <Route path="/create-group" element={<CreateGroup />} />
         <Route path="/group-details" element={<GroupDetails />} />
+        <Route path="/create-post" element={<CreatePost />} />
         <Route path="/chat" element={<ChatPage />} />
       </Routes>
     </>

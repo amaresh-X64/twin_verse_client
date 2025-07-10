@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API from "../utils/api";
 
 export default function TwinProfile() {
   const [twin, setTwin] = useState(null);
@@ -8,30 +9,53 @@ export default function TwinProfile() {
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("twinProfile"));
-    const normalize = (val) => (Array.isArray(val) ? val : typeof val === "string" ? [val] : []);
+    const normalizeArray = (val) => (typeof val === "string" ? val : Array.isArray(val) ? val.join(", ") : "");
 
     if (stored) {
-      stored.favCategory = normalize(stored.favCategory);
-      stored.shoppingTime = normalize(stored.shoppingTime);
-      stored.interests = normalize(stored.interests);
+      stored.favCategory = normalizeArray(stored.favCategory);
+      stored.shoppingTime = Array.isArray(stored.shoppingTime) ? stored.shoppingTime : [];
+      stored.interests = Array.isArray(stored.interests) ? stored.interests : [];
       setTwin(stored);
     }
   }, []);
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
+    try {
+      const res = await API.put("/twin/profile/", twin);
+      console.log("Twin uploaded:", res.data);
+    } catch (err) {
+      console.error("Error uploading twin:", err);
+    }
     localStorage.setItem("twinProfile", JSON.stringify(twin));
     setEditing(false);
   };
 
   const handleChange = (e) => {
     const { name, value, checked, type } = e.target;
-    if (["shoppingTime", "interests", "favCategory"].includes(name) && type === "checkbox") {
-      const current = Array.isArray(twin[name]) ? twin[name] : [];
-      const newValues = checked ? [...current, value] : current.filter((item) => item !== value);
-      setTwin({ ...twin, [name]: newValues });
+    if (["shoppingTime", "interests"].includes(name) && type === "checkbox") {
+      const current = twin[name] || [];
+      const updated = checked ? [...current, value] : current.filter((item) => item !== value);
+      setTwin({ ...twin, [name]: updated });
     } else {
       setTwin({ ...twin, [name]: value });
     }
+  };
+
+  const handleCategoryChange = (e) => {
+    const value = e.target.value;
+    const checked = e.target.checked;
+    const current = twin.favCategory
+      ? twin.favCategory.split(",").map((item) => item.trim())
+      : [];
+
+    let updated;
+    if (checked) {
+      updated = [...new Set([...current, value])];
+    } else {
+      updated = current.filter((item) => item !== value);
+    }
+
+    setTwin({ ...twin, favCategory: updated.join(", ") });
   };
 
   if (!twin) {
@@ -50,9 +74,7 @@ export default function TwinProfile() {
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black text-white flex flex-col items-center py-12 px-4">
       <h1 className="text-4xl sm:text-5xl font-extrabold mb-10 tracking-tight">Your Twinverse Profile</h1>
 
-      {/* Twin Card */}
       <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-8 rounded-3xl shadow-2xl max-w-2xl w-full flex flex-col items-center border border-gray-700">
-        {/* Avatar */}
         <div className="relative mb-6">
           <div className="w-40 h-40 rounded-full p-1 bg-gradient-to-tr from-blue-500 to-purple-500 shadow-lg">
             <img
@@ -97,18 +119,24 @@ export default function TwinProfile() {
 
             <label className="block mb-2 text-sm">Favorite Categories</label>
             <div className="mb-4 flex flex-wrap gap-3">
-              {categoryOptions.map((option) => (
-                <label key={option} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="favCategory"
-                    value={option}
-                    checked={twin.favCategory.includes(option)}
-                    onChange={handleChange}
-                  />
-                  {option}
-                </label>
-              ))}
+              {categoryOptions.map((option) => {
+                const selected = twin.favCategory
+                  ?.split(",")
+                  .map((c) => c.trim())
+                  .includes(option);
+                return (
+                  <label key={option} className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="favCategory"
+                      value={option}
+                      checked={selected}
+                      onChange={handleCategoryChange}
+                    />
+                    {option}
+                  </label>
+                );
+              })}
             </div>
 
             <label className="block mb-2 text-sm">Shopping Time</label>
@@ -176,7 +204,10 @@ export default function TwinProfile() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mb-8">
               <TwinTag label="Style" value={twin.style} />
-              <TwinTag label="Favorite Categories" value={twin.favCategory.join(", ")} />
+              <TwinTag
+                label="Favorite Categories"
+                value={twin.favCategory?.split(",").map((c) => c.trim()).join(", ")}
+              />
               <TwinTag
                 label="Reaction Type"
                 value={twin.reaction === "analytical" ? "Careful & Calculated" : "Quick to Act"}

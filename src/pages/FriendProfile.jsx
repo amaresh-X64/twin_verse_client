@@ -24,14 +24,10 @@ export default function FriendProfile() {
   };
 
   const handleMessage = () => {
-    // Replace with navigation to chat route or modal when implemented
+    // Replace with navigation to chat route or model when implemented
     alert("Messaging feature coming soon!");
   };
 
-  const handleMoreDetails = () => {
-    // Replace with more detailed view; alert for now
-    alert("More profile details coming soon!");
-  };
 
   return (
     <motion.div

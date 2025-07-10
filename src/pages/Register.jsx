@@ -6,12 +6,14 @@ export default function Register() {
   const { registerUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username,setUserName] = useState("");
+  const [name,setName] = useState(""); 
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-lightGray">
       <h2 className="text-3xl font-bold mb-6 text-walmartBlue">Register</h2>
       <form
-        onSubmit={(e) => registerUser(e, email, password)}
+        onSubmit={(e) => registerUser(e, email,username,name ,password)}
         className="bg-white p-6 rounded-lg shadow-lg w-80 space-y-4"
       >
         <input
@@ -19,6 +21,20 @@ export default function Register() {
           type="email"
           placeholder="Email"
           onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <input
+          className="border w-full p-2"
+          type="name"
+          placeholder="Name"
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+        <input
+          className="border w-full p-2"
+          type="username"
+          placeholder="User Name"
+          onChange={(e) => setUserName(e.target.value)}
           required
         />
         <input
