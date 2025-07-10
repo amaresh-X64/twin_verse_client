@@ -1,10 +1,21 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 export default function FriendProfile() {
   const location = useLocation();
   const friend = location.state?.friend;
   const navigate = useNavigate();
+
+  const [isFollowed, setIsFollowed] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("followedFriends");
+    if (stored && friend) {
+      const followed = JSON.parse(stored);
+      setIsFollowed(!!followed.find((f) => f.id === friend.id));
+    }
+  }, [friend]);
 
   if (!friend) {
     return (
@@ -14,20 +25,18 @@ export default function FriendProfile() {
     );
   }
 
-  // Dummy preference data if not provided in friend object
-  const dummyPreferences = {
-    catchphrase: friend.catchphrase || "Living life one twin at a time!",
-    style: friend.style || "Casual and trendy",
-    interests: friend.interests || ["Tech Gadgets", "Fashion", "Travel"],
-    favoriteCategories:
-      friend.favoriteCategories || ["Electronics", "Clothing"],
-  };
+  // ...existing dummyPreferences code...
 
   const handleMessage = () => {
+<<<<<<< HEAD
     // Replace with navigation to chat route or model when implemented
     alert("Messaging feature coming soon!");
   };
 
+=======
+    navigate("/chat", { state: { friend } });
+  };
+>>>>>>> 46b5bc8 (Integerating chat in myfriends)
 
   return (
     <motion.div
@@ -37,55 +46,19 @@ export default function FriendProfile() {
       transition={{ duration: 0.6 }}
     >
       <div className="bg-white p-8 rounded-3xl shadow-2xl border border-blue-500 max-w-md w-full text-center">
-        <img
-          src={friend.avatar}
-          alt={friend.name}
-          className="w-36 h-36 mx-auto rounded-full border-4 border-blue-600 shadow-lg mb-6"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src =
-              "https://api.dicebear.com/7.x/bottts/svg?seed=default";
-          }}
-        />
-        <h2 className="text-3xl font-bold mb-2 text-blue-800">
-          {friend.name}
-        </h2>
-        <p className="text-lg italic text-gray-500 mb-6">{friend.subtitle}</p>
-
-        <div className="text-left mb-4">
-          <p className="font-semibold text-gray-700">Catchphrase:</p>
-          <p className="text-gray-600">{dummyPreferences.catchphrase}</p>
-        </div>
-        <div className="text-left mb-4">
-          <p className="font-semibold text-gray-700">Style:</p>
-          <p className="text-gray-600">{dummyPreferences.style}</p>
-        </div>
-        <div className="text-left mb-4">
-          <p className="font-semibold text-gray-700">Interests:</p>
-          <ul className="list-disc list-inside text-gray-600">
-            {dummyPreferences.interests.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
-        </div>
-        <div className="text-left mb-6">
-          <p className="font-semibold text-gray-700">Favorite Categories:</p>
-          <ul className="list-disc list-inside text-gray-600">
-            {dummyPreferences.favoriteCategories.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
-        </div>
-
+        {/* ...existing profile UI... */}
         <div className="flex justify-around mb-6">
-          <button
-            onClick={handleMessage}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full shadow transition"
-          >
-            Message
-          </button>
+          {isFollowed ? (
+            <button
+              onClick={handleMessage}
+              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full shadow transition"
+            >
+              Message
+            </button>
+          ) : (
+            <span className="text-gray-400 italic">Follow to chat</span>
+          )}
         </div>
-
         <button
           onClick={() => navigate(-1)}
           className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full shadow transition"

@@ -1,51 +1,65 @@
 import { useEffect, useState, useRef } from "react";
 import { db } from "../utils/firebase";
 import { ref, push, onValue } from "firebase/database";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
 export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
   const messagesEndRef = useRef(null);
 
+  // Get friend info from navigation state
+  const friend = location.state?.friend;
+
+  // Use friend.id if available, else fallback to friend.name
+  const chatId = friend?.id || friend?.name;
+
   useEffect(() => {
-    document.title = "TwinVerse Chat";
-    const messagesRef = ref(db, "chat/messages");
+    if (!friend) return;
+    document.title = `Chat with ${friend.name}`;
+    const messagesRef = ref(db, `chat/${chatId}`);
     const unsubscribe = onValue(messagesRef, (snapshot) => {
       const data = snapshot.val() || {};
-      // Attach the key to each message for React keys
       const msgList = Object.entries(data)
         .map(([key, value]) => ({ ...value, _key: key }))
         .sort((a, b) => a.timestamp - b.timestamp);
       setMessages(msgList);
     });
     return () => unsubscribe();
-  }, []);
+  }, [chatId, friend]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-const sendMessage = (e) => {
-  e.preventDefault();
-  if (input.trim() === "") return;
-  const messagesRef = ref(db, "chat/messages");
-  push(messagesRef, {
-    text: input,
-    timestamp: Date.now(),
-    author: "You",
-  })
-    .then(() => {
-      console.log("Message sent!");
-    })
-    .catch((err) => {
-      console.error("Error sending message:", err);
-    });
-  setInput("");
-};
+  if (!friend) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500 text-xl">
+        No friend selected for chat.
+      </div>
+    );
+  }
 
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (input.trim() === "") return;
+    const messagesRef = ref(db, `chat/${chatId}`);
+    push(messagesRef, {
+      text: input,
+      timestamp: Date.now(),
+      author: "You",
+    })
+      .then(() => {
+        console.log("Message sent!");
+      })
+      .catch((err) => {
+        console.error("Error sending message:", err);
+      });
+    setInput("");
+  };
 
   return (
     <motion.div
@@ -56,7 +70,7 @@ const sendMessage = (e) => {
     >
       <div className="bg-white shadow-xl w-full max-w-md flex flex-col h-screen">
         <div className="bg-green-600 text-white text-xl font-bold px-6 py-4 rounded-t-3xl text-center shadow">
-          🟢 TwinVerse Chat
+          🟢 Chat with {friend.name}
         </div>
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-2 bg-green-50" style={{ minHeight: 0 }}>
           {messages.length === 0 && (
@@ -108,10 +122,10 @@ const sendMessage = (e) => {
           </button>
         </form>
         <button
-          onClick={() => navigate("/feed")}
+          onClick={() => navigate(-1)}
           className="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 rounded-b-3xl transition"
         >
-          Back to Feed
+          Back
         </button>
       </div>
     </motion.div>

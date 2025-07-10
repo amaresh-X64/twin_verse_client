@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
+=======
+import { Routes, Route, Link } from "react-router-dom";
+>>>>>>> 46b5bc8 (Integerating chat in myfriends)
 import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
 import Feed from "./pages/Feed";
@@ -15,8 +19,12 @@ import CreateGroup from "./pages/CreateGroup";
 import GroupDetails from "./pages/GroupDetails";
 import ChatPage from "./pages/ChatPage";
 import WishlistPage from "./pages/WishlistPage";
+<<<<<<< HEAD
 import CreatePost from "./components/CreatePost";
 
+=======
+import MyFriends from "./pages/MyFriends";
+>>>>>>> 46b5bc8 (Integerating chat in myfriends)
 function App() {
   return (
     <>
@@ -26,7 +34,7 @@ function App() {
         <Link to="/feed">Feed</Link>
         <Link to="/groups">Groups</Link>
         <Link to="/leaderboard">Leaderboard</Link>
-        <Link to="/chat">Chat</Link>
+        <Link to="/my-friends">My Friends</Link>
       </nav>
 
       <Routes>
@@ -48,6 +56,7 @@ function App() {
         <Route path="/group-details" element={<GroupDetails />} />
         <Route path="/create-post" element={<CreatePost />} />
         <Route path="/chat" element={<ChatPage />} />
+        <Route path="/my-friends" element={<MyFriends />} />
       </Routes>
     </>
   );
