@@ -22,6 +22,7 @@ function App() {
     <>
       <nav className="bg-walmartBlue text-white px-6 py-4 flex gap-6">
         <Link to="/profile">Profile</Link>
+        <Link to="/twin">Twin Profile</Link>
         <Link to="/friends-follow">Following</Link>
         <Link to="/feed">Feed</Link>
         <Link to="/groups">Groups</Link>

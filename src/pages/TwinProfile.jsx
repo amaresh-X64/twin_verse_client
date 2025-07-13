@@ -8,15 +8,16 @@ export default function TwinProfile() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("twinProfile"));
-    const normalizeArray = (val) => (typeof val === "string" ? val : Array.isArray(val) ? val.join(", ") : "");
-
-    if (stored) {
-      stored.favCategory = normalizeArray(stored.favCategory);
-      stored.shoppingTime = Array.isArray(stored.shoppingTime) ? stored.shoppingTime : [];
-      stored.interests = Array.isArray(stored.interests) ? stored.interests : [];
-      setTwin(stored);
-    }
+    const fetchTwin = async () => {
+      try {
+        const res = await API.get("/twin/profile/");
+        setTwin(res.data);
+      } catch (err) {
+        console.error("Twin profile fetch error:", err);
+        setTwin(null);
+      }
+    };
+    fetchTwin();
   }, []);
 
   const handleSaveChanges = async () => {

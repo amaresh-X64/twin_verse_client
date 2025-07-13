@@ -1,30 +1,31 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import API from "../utils/api";
 
 export default function Groups() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [groups, setGroups] = useState([
-    {
-      id: 1,
-      name: "Twin Techies",
-      icon: "https://api.dicebear.com/7.x/bottts/svg?seed=Group1",
-      members: ["Twin A", "Twin B"],
-      admin: "You",
-    },
-  ]);
+  const [groups, setGroups] = useState([]);
 
-  // Check if a new group has been passed from CreateGroup
-  useEffect(() => {
-    if (location.state?.newGroup) {
-      const newGroup = location.state.newGroup;
-      if (!groups.some((g) => g.id === newGroup.id)) {
-        setGroups((prev) => [...prev, newGroup]);
+  const fetchGroups = async () => {
+    try {
+      const res = await API.get("/groups/");
+      if (Array.isArray(res.data)) {
+        setGroups(res.data);
+      } else if (Array.isArray(res.data.results)) {
+        setGroups(res.data.results);
+      } else {
+        setGroups([]);
       }
+    } catch (err) {
+      console.error("Failed to fetch groups", err);
+      setGroups([]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.state]);
+  };
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
 
   return (
     <motion.div
@@ -62,7 +63,9 @@ export default function Groups() {
             />
             <div>
               <p className="font-semibold text-gray-800">{group.name}</p>
-              <p className="text-xs text-gray-500">Admin: {group.admin}</p>
+              <p className="text-xs text-gray-500">
+                Admin: {group.admin_name || "Unknown"}
+              </p>
             </div>
           </div>
           <button
