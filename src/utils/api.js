@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = axios.create({ baseURL: "http://localhost:8000/api/" });
+const API = axios.create({ baseURL: "https://mysite-uete.onrender.com/api/" });
 
 API.interceptors.request.use(config => {
   const token = localStorage.getItem("access_token");
@@ -52,7 +52,7 @@ API.interceptors.response.use(
         const refreshToken = localStorage.getItem("refresh_token");
         if (!refreshToken) throw new Error("Missing refresh token");
 
-        const response = await axios.post("http://localhost:8000/api/token/refresh/", {
+        const response = await axios.post("https://mysite-uete.onrender.com/api/token/refresh/", {
           refresh: refreshToken
         });
 

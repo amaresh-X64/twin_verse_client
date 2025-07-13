@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
   const loginUser = async (e, email, password) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:8000/api/token/", {
+      const res = await axios.post("https://mysite-uete.onrender.com/api/token/", {
         email,
         password,
       });
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
   const registerUser = async (e, email,username,name, password) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:8000/api/users/register/", {
+      const res = await axios.post("https://mysite-uete.onrender.com/api/users/register/", {
         email,
         username,
         name,
